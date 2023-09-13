@@ -1,4 +1,4 @@
-import { createAskAndGetProof } from "./matching_engine/kalypso";
+import { createAskAndGetProof } from "./kalypso";
 
 const dotenv = require("dotenv")
 const express = require('express')
