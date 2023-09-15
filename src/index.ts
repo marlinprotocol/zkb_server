@@ -31,8 +31,6 @@ app.post('/proveTx',async(req:any,res:any)=>{
     try {
         let public_input = req.body?.public;
         let secret_input = req.body?.secret;
-        console.log(public_input);
-        console.log(secret_input);
         let proof = await createAskAndGetProof({
             pub:public_input,
             sec:secret_input

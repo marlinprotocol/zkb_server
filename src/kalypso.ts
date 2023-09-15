@@ -73,7 +73,7 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
     
     // Create ASK request
     const askRequest = await createAsk({
-      marketId: "0x01dacdedd95716ca59029fd4a94987d8370a00f23d9a339a49342a80cab0de9b",
+      marketId: "0xf9663388e4d44b8ebe5d75c4f47301c5ae26d22ff5471418568538e1b572a374",
       reward,
       expiry: 100000,
       timeTakenForProofGeneration: 100000,
