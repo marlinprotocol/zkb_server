@@ -2,13 +2,16 @@ import { createAsk, approveRewardTokens,getPlatformFee, encryptDataWithRSAandAES
 import { ethers } from "ethers";
 import * as fs from "fs";
 import { gzip } from "node-gzip";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 type createAskAndGetProofParams = {
     pub : any,
     sec : any
 }
 
-export const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetProofParams) => {
+const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetProofParams) => {
   try {
     if (process.env.PRIVATE_KEY == null || process.env.PRIVATE_KEY == undefined) {
       throw new Error("PRIVATE_KEY not found in the .env file. Please make sure to setup environment variables in your project.");
@@ -112,3 +115,30 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
     console.log(err);
   }
 };
+
+//Get version
+export const getVersion = async(req:any,res:any) => {
+    try{
+        res.status(200).json({
+            ref: "test",
+            commitHash: "test"
+        })
+    }catch(error){
+        console.log(error);
+    }
+}
+
+//Generate Proof for the public and secret input
+export const proveTransaction = async(req:any,res:any) => {
+    try {
+        let public_input = req.body?.public;
+        let secret_input = req.body?.secret;
+        let proof = await createAskAndGetProof({
+            pub:public_input,
+            sec:secret_input
+        })
+        res.status(200).send(proof);
+    } catch (error) {
+        console.log(error)
+    }
+}
