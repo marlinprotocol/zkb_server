@@ -1,13 +1,17 @@
 import { createAsk, approveRewardTokens,getPlatformFee, encryptDataWithRSAandAES, base64ToHex, getProof } from "kalypso-sdk";
 import { ethers } from "ethers";
 import * as fs from "fs";
+import { gzip } from "node-gzip";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 type createAskAndGetProofParams = {
     pub : any,
     sec : any
 }
 
-export const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetProofParams) => {
+const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetProofParams) => {
   try {
     if (process.env.PRIVATE_KEY == null || process.env.PRIVATE_KEY == undefined) {
       throw new Error("PRIVATE_KEY not found in the .env file. Please make sure to setup environment variables in your project.");
@@ -36,7 +40,7 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
     let abiCoder = new ethers.AbiCoder();
     let inputBytes = abiCoder.encode(["uint256[5]"], [[input.root, input.nullifier, input.out_commit, input.delta, input.memo]]);
 
-    const proofMarketPlaceAddress = "0x57d8B74EB5c758C3D6809038E714A1c76c938076";
+    const proofMarketPlaceAddress = "0x6595525c6E7036d015dEfa3eD74Fa05065d15205";
 
     const reward = "1000000000000000";
 
@@ -50,7 +54,7 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
     //Approve token for rewards
     const firstTokenApproval = await approveRewardTokens({
       proofMarketPlaceAddress,
-      tokenContractAddress: "0x4935ea37F0ADd47B9567A36D0806a28459761b60",
+      tokenContractAddress: "0x8147e610aF918807C393d865F3C26A6d3f41ddAE",
       reward,
       wallet: wallet,
     });
@@ -58,7 +62,7 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
 
     const secondTokenApproval = await approveRewardTokens({
       proofMarketPlaceAddress,
-      tokenContractAddress: "0x27FDcb086Cdb0bCFa40638376CD3CbF5B8c69197",
+      tokenContractAddress: "0xFC02897B76538F2897e48146453027fFF8338BaA",
       reward: platformFee!.toFixed(),
       wallet: wallet,
     });
@@ -70,27 +74,29 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
     const result = await encryptDataWithRSAandAES(secretString, publicKey);
     const aclHex = "0x" + base64ToHex(result.aclData);
     const encryptedSecret = "0x" + result.encryptedData;
+    const secretCompressed = await gzip(encryptedSecret);
     
     // Create ASK request
     const askRequest = await createAsk({
-      marketId: "0xf9663388e4d44b8ebe5d75c4f47301c5ae26d22ff5471418568538e1b572a374",
+      marketId: "0x51cbad9bdb9cfe3bd0a756f90ae4ade99e13bdf22709e734092beaec80c356b2",
       reward,
-      expiry: 100000,
+      expiry: 5000000,
       timeTakenForProofGeneration: 100000,
       deadline: 10000,
       proverData: inputBytes,
       proofMarketPlaceAddress,
-      inputAndProofFormatContractAddress: "0xA0Fbd852C6226b3E97eA141c72713dCb851DaCdE",
+      inputAndProofFormatContractAddress: "0x879c498dA74f969112a4f290291A870C9e996730",
       wallet: wallet,
-      secrets: { secret: encryptedSecret, acl: aclHex },
+      secrets: { secret: secretCompressed, acl: aclHex },
     });
     
     let block_number = askRequest.block_number;
     console.log(`Block number : ${block_number}`);
     if(block_number){
+        console.log("\nTrying to fetch proof...")
         return await new Promise(resolve => {
         let intervalId = setInterval(async ()=>{
-            console.log("\nTrying to fetch proof...")
+
             let data = await getProof({
                 proofMarketPlaceAddress:proofMarketPlaceAddress,
                 blockNumber:block_number,
@@ -100,8 +106,6 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
                 console.log(data.message);
                 resolve(data.proof);
                 clearInterval(intervalId);
-            }  else {
-                console.log(data?.message);
             }
         },10000);
         });
@@ -111,3 +115,30 @@ export const createAskAndGetProof = async (createAskAndGetProofParams:createAskA
     console.log(err);
   }
 };
+
+//Get version
+export const getVersion = async(req:any,res:any) => {
+    try{
+        res.status(200).json({
+            ref: "test",
+            commitHash: "test"
+        })
+    }catch(error){
+        console.log(error);
+    }
+}
+
+//Generate Proof for the public and secret input
+export const proveTransaction = async(req:any,res:any) => {
+    try {
+        let public_input = req.body?.public;
+        let secret_input = req.body?.secret;
+        let proof = await createAskAndGetProof({
+            pub:public_input,
+            sec:secret_input
+        })
+        res.status(200).send(proof);
+    } catch (error) {
+        console.log(error)
+    }
+}

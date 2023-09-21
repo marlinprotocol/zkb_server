@@ -1,47 +1,28 @@
-import { createAskAndGetProof } from "./kalypso";
-
-const dotenv = require("dotenv")
-const express = require('express')
-const cors = require('cors');
-const bodyParser = require('body-parser');
-
-const app = express();
-
-app.use(cors());
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json()); 
-app.use(express.json());
+import dotenv from "dotenv";
+import { app } from "./routes/router";
 
 dotenv.config();
 
-//Version check
-app.get('/version', (req:any, res:any) => {
-    try{
-        res.status(200).json({
-            ref: "test",
-            commitHash: "test"
-        })
-    }catch(error){
-        console.log(error);
-    }
-});
+if(process.env.RPC == null || process.env.RPC == undefined){
+    throw Error("RPC not found in .env file");
+}
 
-//Prove Transaction
-app.post('/proveTx',async(req:any,res:any)=>{
-    try {
-        let public_input = req.body?.public;
-        let secret_input = req.body?.secret;
-        let proof = await createAskAndGetProof({
-            pub:public_input,
-            sec:secret_input
-        })
-        console.log(proof)
-        res.status(200).send(proof);
-    } catch (error) {
-        console.log(error)
-    }
-});
+if(process.env.SERVER_MODE == null || process.env.SERVER_MODE == undefined){
+    throw Error("SERVER_MODE not found in .env file");
+}
+
+if(process.env.PRIVATE_KEY == null || process.env.PRIVATE_KEY == undefined){
+    throw Error("PRIVATE_KEY not found in .env file");
+}
+
+if(process.env.PORT == null || process.env.PORT == undefined){
+    throw Error("PORT not found in .env file");
+}
+
+if(process.env.API_KEY == null || process.env.API_KEY == undefined){
+    throw Error("API_KEY not found in .env file");
+}
 
 app.listen(process.env.PORT, () => {
-    console.log(`Example app listening on port ${process.env.PORT}`)
+    console.log(`Zkb delegated server running on port : ${process.env.PORT}`)
 })
