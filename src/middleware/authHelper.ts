@@ -27,7 +27,6 @@ export const validateApiSecret = (req:any,res:any,next:any) =>{
         }
       });
     }else if (server_mode == "DEV"){
-      console.log("Authenticating in DEV mode")
       next();
     }
     else{
