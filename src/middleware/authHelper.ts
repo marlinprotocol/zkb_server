@@ -1,4 +1,4 @@
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 require("dotenv").config();
 
 export const validateApiSecret = (req:any,res:any,next:any) =>{
