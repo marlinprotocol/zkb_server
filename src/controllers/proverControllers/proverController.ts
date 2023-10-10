@@ -1,7 +1,6 @@
-import { createAsk, approveRewardTokens,getPlatformFee, encryptDataWithRSAandAES, base64ToHex, getProof } from "kalypso-sdk";
+import { KalypsoSdk } from "kalypso-sdk";
 import { ethers } from "ethers";
-import * as fs from "fs";
-import { gzip } from "node-gzip";
+import BigNumber from "bignumber.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -40,75 +39,84 @@ const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetPr
     let abiCoder = new ethers.AbiCoder();
     let inputBytes = abiCoder.encode(["uint256[5]"], [[input.root, input.nullifier, input.out_commit, input.delta, input.memo]]);
 
-    const proofMarketPlaceAddress = "0x6595525c6E7036d015dEfa3eD74Fa05065d15205";
+    const reward = "1000000000000000000";
 
-    const reward = "1000000000000000";
-
-    let inputbytes_length = inputBytes.length;
-    let platformFee = await getPlatformFee({
-      proofMarketPlaceAddress,
-      wallet,
-      inputbytes_length
-    })
-
-    //Approve token for rewards
-    const firstTokenApproval = await approveRewardTokens({
-      proofMarketPlaceAddress,
-      tokenContractAddress: "0x8147e610aF918807C393d865F3C26A6d3f41ddAE",
-      reward,
-      wallet: wallet,
+    const kalypso = new KalypsoSdk(wallet, {
+      proofMarketPlace: "0xf747B2a788b453eE4d00BE24Cd7D7A8532dCD3Cc",
+      generatorRegistry: "0x77716073aB8D14bb7470021daeb33567Dc5c1BF7",
+      rsaRegistryAddress: "0x7ce14a0dc913e35e99C1F9D95685b30E73952240",
+      paymentTokenAddress: "0xCe23FfE37A1669CfD0081109aFC680c8503888f8",
+      platformTokenAddress: "0x560FCeb707B0F4b56d43d295e45eD7FE939b96b6",
     });
-    console.log("firstTokenApproval txHash : ", firstTokenApproval);
 
-    const secondTokenApproval = await approveRewardTokens({
-      proofMarketPlaceAddress,
-      tokenContractAddress: "0xFC02897B76538F2897e48146453027fFF8338BaA",
-      reward: platformFee!.toFixed(),
-      wallet: wallet,
-    });
-    console.log("secondTokenApproval txHash : ", secondTokenApproval);
-
-    const publicKey = fs.readFileSync("./src/matching_engine/public_key_2048.pem", "utf-8");
     const secretString = JSON.stringify(secret);
 
-    const result = await encryptDataWithRSAandAES(secretString, publicKey);
-    const aclHex = "0x" + base64ToHex(result.aclData);
-    const encryptedSecret = "0x" + result.encryptedData;
-    const secretCompressed = await gzip(encryptedSecret);
-    
-    // Create ASK request
-    const askRequest = await createAsk({
-      marketId: "0x51cbad9bdb9cfe3bd0a756f90ae4ade99e13bdf22709e734092beaec80c356b2",
-      reward,
-      expiry: 5000000,
-      timeTakenForProofGeneration: 100000,
-      deadline: 10000,
-      proverData: inputBytes,
-      proofMarketPlaceAddress,
-      inputAndProofFormatContractAddress: "0x879c498dA74f969112a4f290291A870C9e996730",
-      wallet: wallet,
-      secrets: { secret: secretCompressed, acl: aclHex },
-    });
-    
-    let block_number = askRequest.block_number;
-    console.log(`Block number : ${block_number}`);
-    if(block_number){
-        console.log("\nTrying to fetch proof...")
-        return await new Promise(resolve => {
-        let intervalId = setInterval(async ()=>{
+    const latestBlock = await provider.getBlockNumber();
 
-            let data = await getProof({
-                proofMarketPlaceAddress:proofMarketPlaceAddress,
-                blockNumber:block_number,
-                wallet:wallet
-            });
+    const marketId = "0x6c2ec35f8128c43e710a84adb6c7de8978238ab2d2e2b9790847dbab464b54f6";
+    const assignmentDeadline = new BigNumber(latestBlock).plus(100000000);
+    const proofGenerationTimeInBlocks = new BigNumber(100000000);
+
+    // Create ASK request
+    const askRequest = await kalypso
+      .MarketPlace()
+      .createAsk(
+        marketId,
+        inputBytes,
+        reward,
+        assignmentDeadline.toFixed(0),
+        proofGenerationTimeInBlocks.toFixed(0),
+        await wallet.getAddress(),
+        secretString
+      );
+    await askRequest.wait();
+    console.log("Ask Request Hash: ", askRequest.hash);
+    
+    let receipt = await provider.getTransactionReceipt(askRequest.hash);
+
+    let askId = await kalypso.MarketPlace().getAskId(receipt!);
+    console.log("Ask ID :",askId);
+
+    if(askId){
+      return await new Promise(resolve => {
+        console.log("\nTrying to fetch proof...\n")
+        let intervalId = setInterval(async ()=>{
+            let data = await kalypso.MarketPlace().getProofByAskId(askId.toString());
             if(data?.proof_generated){
                 console.log(data.message);
-                resolve(data.proof);
+                let abiCoder = new ethers.AbiCoder(); 
+                let proof = abiCoder.decode(
+                  ["uint256[8]"],
+                    data.proof,
+                );
+      
+                let formated_proof = {
+                  "a":[
+                    proof[0][0].toString(),
+                    proof[0][1].toString(),
+                  ],
+                  "b":[
+                    [
+                      proof[0][2].toString(),
+                      proof[0][3].toString(),
+                    ],
+                    [
+                      proof[0][4].toString(),
+                      proof[0][5].toString(),
+                    ]
+                  ],
+                  "c":[
+                    proof[0][6].toString(),
+                    proof[0][7].toString(),
+                  ]
+                }
+                resolve(formated_proof);
                 clearInterval(intervalId);
+            }  else {
+                console.log(`Proof not submitted yet for askId : ${askId}.`);
             }
         },10000);
-        });
+      });
     }
 
   } catch (err) {
