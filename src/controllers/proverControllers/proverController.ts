@@ -3,6 +3,32 @@ import { ethers } from "ethers";
 import BigNumber from "bignumber.js";
 import dotenv from "dotenv";
 
+type KalspsoConfig = {
+  paymentToken: string;
+  platformToken: string;
+  generatorRegistry: string;
+  attestationVerifier: string;
+  EntityRegistry: string;
+  proofMarketPlace: string;
+  transferVerifierWrapper: string;
+  zkbVerifierWrapper: string;
+  priorityList: string;
+  inputAndProofFormat: string;
+}
+
+const kalypsoConfig: KalspsoConfig = {
+  "paymentToken": "0x746F190DDaa001D2E42D768FFE46afD1720Cc493",
+  "platformToken": "0xA713CB10e34EE0B1dD07af2E965602C118CD7be7",
+  "generatorRegistry": "0x82CeA7f50819e488C8D5C6D5D142d8a5e0A7b056",
+  "attestationVerifier": "0xa60E856846bF736D0519ea0d38d2837a554F7862",
+  "EntityRegistry": "0x6977Fc08E821e479e9BA00b2d37Ba9b85FCC0985",
+  "proofMarketPlace": "0x83D452dD497c4Fd01a8e5531F336D084663Df0B1",
+  "transferVerifierWrapper": "0x87B34616819539d4A9517b26be8114CC1425134A",
+  "zkbVerifierWrapper": "0xe979d1CDfF44B1D533D77A5DA8eAbAdc3057d829",
+  "priorityList": "0xd271FFD856d25099965AaD15A5d8Db4E3A954738",
+  "inputAndProofFormat": "0xDB451516a135f76aADb2168fA5E1d4cA263B05b7"
+}
+
 dotenv.config();
 
 type createAskAndGetProofParams = {
@@ -41,21 +67,16 @@ const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetPr
 
     const reward = "1000000000000000000";
 
-    const kalypso = new KalypsoSdk(wallet, {
-      proofMarketPlace: "0xf747B2a788b453eE4d00BE24Cd7D7A8532dCD3Cc",
-      generatorRegistry: "0x77716073aB8D14bb7470021daeb33567Dc5c1BF7",
-      rsaRegistryAddress: "0x7ce14a0dc913e35e99C1F9D95685b30E73952240",
-      paymentTokenAddress: "0xCe23FfE37A1669CfD0081109aFC680c8503888f8",
-      platformTokenAddress: "0x560FCeb707B0F4b56d43d295e45eD7FE939b96b6",
-    });
+    const kalypso = new KalypsoSdk(wallet, kalypsoConfig);
 
     const secretString = JSON.stringify(secret);
 
     const latestBlock = await provider.getBlockNumber();
 
-    const marketId = "0x6c2ec35f8128c43e710a84adb6c7de8978238ab2d2e2b9790847dbab464b54f6";
-    const assignmentDeadline = new BigNumber(latestBlock).plus(100000000);
-    const proofGenerationTimeInBlocks = new BigNumber(100000000);
+    const marketId = "0x07b7d625c70be57115ab18fc435ed0253425671cb91bd6547b7defbc75f52082";
+    const assignmentDeadline = new BigNumber(latestBlock).plus(10000000000);
+    console.log({ latestBlock, assignmentDeadline: assignmentDeadline.toFixed(0) });
+    const proofGenerationTimeInBlocks = new BigNumber(10000000000);
 
     // Create ASK request
     const askRequest = await kalypso
@@ -67,57 +88,57 @@ const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetPr
         assignmentDeadline.toFixed(0),
         proofGenerationTimeInBlocks.toFixed(0),
         await wallet.getAddress(),
-        secretString
+        Buffer.from(secretString)
       );
-    await askRequest.wait();
-    console.log("Ask Request Hash: ", askRequest.hash);
-    
-    let receipt = await provider.getTransactionReceipt(askRequest.hash);
-
-    let askId = await kalypso.MarketPlace().getAskId(receipt!);
-    console.log("Ask ID :",askId);
-
-    if(askId){
-      return await new Promise(resolve => {
-        console.log("\nTrying to fetch proof...\n")
-        let intervalId = setInterval(async ()=>{
-            let data = await kalypso.MarketPlace().getProofByAskId(askId.toString());
-            if(data?.proof_generated){
-                console.log(data.message);
-                let abiCoder = new ethers.AbiCoder(); 
-                let proof = abiCoder.decode(
-                  ["uint256[8]"],
-                    data.proof,
-                );
+      await askRequest.wait();
+      console.log("Ask Request Hash: ", askRequest.hash);
       
-                let formated_proof = {
-                  "a":[
-                    proof[0][0].toString(),
-                    proof[0][1].toString(),
-                  ],
-                  "b":[
-                    [
-                      proof[0][2].toString(),
-                      proof[0][3].toString(),
+      let receipt = await provider.getTransactionReceipt(askRequest.hash);
+  
+      let askId = await kalypso.MarketPlace().getAskId(receipt!);
+      console.log("Ask ID :",askId);
+  
+      if(askId){
+        return await new Promise(resolve => {
+          console.log("\nTrying to fetch proof...\n")
+          let intervalId = setInterval(async ()=>{
+              let data = await kalypso.MarketPlace().getProofByAskId(askId.toString());
+              if(data?.proof_generated){
+                  console.log(data.message);
+                  let abiCoder = new ethers.AbiCoder(); 
+                  let proof = abiCoder.decode(
+                    ["uint256[8]"],
+                      data.proof,
+                  );
+        
+                  let formated_proof = {
+                    "a":[
+                      proof[0][0].toString(),
+                      proof[0][1].toString(),
                     ],
-                    [
-                      proof[0][4].toString(),
-                      proof[0][5].toString(),
+                    "b":[
+                      [
+                        proof[0][2].toString(),
+                        proof[0][3].toString(),
+                      ],
+                      [
+                        proof[0][4].toString(),
+                        proof[0][5].toString(),
+                      ]
+                    ],
+                    "c":[
+                      proof[0][6].toString(),
+                      proof[0][7].toString(),
                     ]
-                  ],
-                  "c":[
-                    proof[0][6].toString(),
-                    proof[0][7].toString(),
-                  ]
-                }
-                resolve(formated_proof);
-                clearInterval(intervalId);
-            }  else {
-                console.log(`Proof not submitted yet for askId : ${askId}.`);
-            }
-        },10000);
-      });
-    }
+                  }
+                  resolve(formated_proof);
+                  clearInterval(intervalId);
+              }  else {
+                  console.log(`Proof not submitted yet for askId : ${askId}.`);
+              }
+          },10000);
+        });
+      }
 
   } catch (err) {
     console.log(err);
