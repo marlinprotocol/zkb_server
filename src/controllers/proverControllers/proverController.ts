@@ -16,17 +16,17 @@ type KalspsoConfig = {
   inputAndProofFormat: string;
 }
 
-const kalypsoConfig: KalspsoConfig = {
-  "paymentToken": "0x746F190DDaa001D2E42D768FFE46afD1720Cc493",
-  "platformToken": "0xA713CB10e34EE0B1dD07af2E965602C118CD7be7",
-  "generatorRegistry": "0x82CeA7f50819e488C8D5C6D5D142d8a5e0A7b056",
-  "attestationVerifier": "0xa60E856846bF736D0519ea0d38d2837a554F7862",
-  "EntityRegistry": "0x6977Fc08E821e479e9BA00b2d37Ba9b85FCC0985",
-  "proofMarketPlace": "0x83D452dD497c4Fd01a8e5531F336D084663Df0B1",
-  "transferVerifierWrapper": "0x87B34616819539d4A9517b26be8114CC1425134A",
-  "zkbVerifierWrapper": "0xe979d1CDfF44B1D533D77A5DA8eAbAdc3057d829",
-  "priorityList": "0xd271FFD856d25099965AaD15A5d8Db4E3A954738",
-  "inputAndProofFormat": "0xDB451516a135f76aADb2168fA5E1d4cA263B05b7"
+const kalypsoConfig = {
+  "payment_token": "0xDa25fF5adCa83e38CAA78ACC03046C59315457f4",
+  "staking_token": "0xb2d1265c3B638958Fd91EefF8267b3dF0b23fF7b",
+  "generator_registry": "0xaDF6a4858f22C7fDfc56885E35A9D12E67553d96",
+  "attestation_verifier": "0x398d55904A8fFf1cEb2b639cE854fc58c0305515",
+  "entity_registry": "0x6CEa4be917D3f58ea19358044A43fE7195c9c047",
+  "proof_market_place": "0x5cc413E6eC01Cf923DcBb4E98010DF53686Dd756",
+  "transfer_verifier_wrapper": "0xD7996353Bb1312F160f47e2C85174A83D3Ef7Ec6",
+  "zkb_verifier_wrapper": "0x4c97BEa5F37B21b3BEa5E6d0316352D4b8eBA20e",
+  "priority_list": "0x83C7F3bd2C2313b6FBA7474134461676c0fB32cd",
+  "input_and_proof_format": "0xd34748D0614d9bfC7e9011FeEA3AF33651dad066"
 }
 
 dotenv.config();
