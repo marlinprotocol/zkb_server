@@ -29,7 +29,7 @@
     "cors": "^2.8.5",
     "ethers": "^6.6.6",
     "express": "^4.18.2",
-    "kalypso-sdk": "1.0.16",
+    "kalypso-sdk": "1.0.17",
     "node-gzip": "^1.1.2"
   }
 }
