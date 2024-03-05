@@ -91,7 +91,7 @@ const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetPr
   
     const latestBlock = await provider.getBlockNumber();
   
-    const marketId = "3";
+    const marketId = "4";
     const assignmentDeadline = new BigNumber(latestBlock).plus(10000000000);
     console.log({ latestBlock, assignmentDeadline: assignmentDeadline.toFixed(0) });
     const proofGenerationTimeInBlocks = new BigNumber(10000000000);
@@ -129,10 +129,8 @@ const createAskAndGetProof = async (createAskAndGetProofParams:createAskAndGetPr
     console.log("Ask Request Hash: ", askRequest.hash, " at block", block_number);
       
     let receipt = await provider.getTransactionReceipt(askRequest.hash);
-
     let askId = await kalypso.MarketPlace().getAskId(receipt!);
     console.log("Ask ID :",askId);
-
 
 
     if(askId){
