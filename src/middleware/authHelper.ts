@@ -22,18 +22,14 @@ export const validateApiSecret = (req: any, res: any, next: any) => {
       function (err, result) {
         if (err) {
           console.log(err);
-          return res
-            .status(500)
-            .json({
-              message: "Error authenticating with the provided api-key",
-            });
+          return res.status(500).json({
+            message: "Error authenticating with the provided api-key",
+          });
         }
         if (!result) {
-          return res
-            .status(401)
-            .json({
-              message: "Authenticaton failed, invalid api-key provided",
-            });
+          return res.status(401).json({
+            message: "Authenticaton failed, invalid api-key provided",
+          });
         } else {
           next();
         }

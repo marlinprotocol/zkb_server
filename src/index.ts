@@ -24,5 +24,7 @@ if (process.env.API_KEY == null || process.env.API_KEY == undefined) {
 }
 
 app.listen(process.env.PORT, () => {
-  console.log(`Zkb delegated server running on port : ${process.env.PORT}`);
+  console.log(
+    `kalypso-server delegated server running on port : ${process.env.PORT}`
+  );
 });

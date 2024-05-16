@@ -1,4 +1,4 @@
-# ZkbServer
+# kalypso-server
 
 ##### .env file :
 
@@ -17,3 +17,7 @@ SERVER_MODE=DEV  #There are two options, DEV and PROD, using PROD enables API ke
 ```
 npm start
 ```
+
+# TODO:
+
+- add api /proveEncryptedTx

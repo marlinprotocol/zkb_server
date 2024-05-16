@@ -6,5 +6,5 @@ export const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Prover APIs for Zkbob
+// Prover APIs for kalypso-server
 app.use("", prover_router);
