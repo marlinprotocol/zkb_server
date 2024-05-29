@@ -40,7 +40,7 @@ type createAskAndGetProofParams = {
 };
 
 const createAskAndGetProof = async (
-  createAskAndGetProofParams: createAskAndGetProofParams
+  createAskAndGetProofParams: createAskAndGetProofParams,
 ) => {
   try {
     if (
@@ -48,14 +48,25 @@ const createAskAndGetProof = async (
       process.env.PRIVATE_KEY == undefined
     ) {
       throw new Error(
-        "PRIVATE_KEY not found in the .env file. Please make sure to setup environment variables in your project."
+        "PRIVATE_KEY not found in the .env file. Please make sure to setup environment variables in your project.",
       );
     }
 
     if (process.env.RPC == null || process.env.RPC == undefined) {
       throw new Error(
-        "RPC not found in the .env file. Please make sure to setup environment variables in your project."
+        "RPC not found in the .env file. Please make sure to setup environment variables in your project.",
       );
+    }
+
+    if (process.env.MARKET_ID == null || process.env.MARKET_ID == undefined) {
+      throw new Error("MARKET_ID not found in .env file");
+    }
+
+    if (
+      process.env.PROOF_REWARD == null ||
+      process.env.PROOF_REWARD == undefined
+    ) {
+      throw new Error("PROOF_REWARD not found in .env file");
     }
 
     if (
@@ -83,10 +94,18 @@ const createAskAndGetProof = async (
     let abiCoder = new ethers.AbiCoder();
     let inputBytes = abiCoder.encode(
       ["uint256[5]"],
-      [[input.root, input.nullifier, input.out_commit, input.delta, input.memo]]
+      [
+        [
+          input.root,
+          input.nullifier,
+          input.out_commit,
+          input.delta,
+          input.memo,
+        ],
+      ],
     );
 
-    const reward = "1000000000000000000";
+    const reward = process.env.PROOF_REWARD;
 
     const kalypso = new KalypsoSdk(wallet, kalypsoConfig);
 
@@ -94,8 +113,7 @@ const createAskAndGetProof = async (
 
     const latestBlock = await provider.getBlockNumber();
 
-    const marketId =
-      "0x07b7d625c70be57115ab18fc435ed0253425671cb91bd6547b7defbc75f52082";
+    const marketId = process.env.MARKET_ID;
     const assignmentDeadline = new BigNumber(latestBlock).plus(10000000000);
     console.log({
       latestBlock,
@@ -113,7 +131,7 @@ const createAskAndGetProof = async (
       await wallet.getAddress(),
       0, // TODO: keep this 0 for now
       Buffer.from(secretString),
-      false
+      false,
     );
     await askRequest.wait();
     console.log("Ask Request Hash: ", askRequest.hash);

@@ -33,7 +33,7 @@ export const validateApiSecret = (req: any, res: any, next: any) => {
         } else {
           next();
         }
-      }
+      },
     );
   } else if (server_mode == "DEV") {
     next();
