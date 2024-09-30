@@ -1,7 +1,6 @@
 import express from 'express';
 import { getVersion, proveTransaction, proverEncryptedRequestTx } from '../../controllers';
 import { 
-  // checkRateLimitAndThrottle, 
   validateApiSecret, 
   validateProveTxPayload, 
   encryptedSecretMiddlesWares 

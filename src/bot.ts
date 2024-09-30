@@ -1259,7 +1259,7 @@ const createAskTest = async () => {
     config.MARKET_ID,
     matchingEngineKey
   );
-  // console.log(JSON.stringify(encryptedRequestData));
+  console.log(JSON.stringify(encryptedRequestData));
   {
     const date = new Date();
     console.log('encryption done', date.getMinutes(), ':', date.getSeconds());
